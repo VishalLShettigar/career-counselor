@@ -1,0 +1,14 @@
+flask
+pyresparser
+spacy
+nltk
+pdfminer.six
+python-docx
+numpy
+pandas
+joblib
+//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
+//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
+//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
+//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
+//https://ole03.yourlearning.ibm.com/scorm_package_symlnk/scorm_packages/MDL-265_MDLPT-272_LARS-3918/scormcontent/assets/Bookshelf.jpg
