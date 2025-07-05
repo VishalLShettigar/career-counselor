@@ -7,7 +7,7 @@ python-docx
 numpy
 pandas
 joblib
-
+PyMuPDF
 gunicorn
 mysql-connector-python
 python-dotenv
