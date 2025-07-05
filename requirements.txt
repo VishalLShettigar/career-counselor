@@ -11,3 +11,4 @@ PyMuPDF
 gunicorn
 mysql-connector-python
 python-dotenv
+reportlab
