@@ -160,7 +160,9 @@
             <div class="card p-3">
               <h5>Personal Information</h5>
               <input class="form-control mb-2" name="applicant_name" placeholder="Full Name" required>
-              <input class="form-control mb-2" name="applicant_email" placeholder="Email" required>
+              <!-- Remove this input or hide it -->
+              <input type="hidden" name="applicant_email" value="{{ session['user_email'] }}">
+
             </div>
           </div>
 

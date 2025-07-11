@@ -39,9 +39,10 @@
     }
 
     .back-btn {
-      display: block;
-      margin: 30px auto 0;
-      width: 150px;
+      display: inline-block;
+      margin: 20px 10px 0;
+      width: 180px;
+      text-align: center;
     }
 
     @keyframes fadeInUp {
@@ -84,6 +85,7 @@
           <input type="number" class="form-control" id="experience" name="experience" required />
         </div>
         <button type="submit" class="btn btn-primary w-100">Find Jobs</button>
+        <a href="/view-applications-submit" class="btn btn-info back-btn">📄 View Applications</a>
         <a href="/index" class="btn btn-secondary back-btn">Back</a>
       </form>
     </div>
@@ -97,7 +99,6 @@
           {% for job in jobs %}
           <div class="card mb-3">
             <div class="card-body">
-              
               <h5 class="card-title">{{ job.designation }}</h5>
               <p class="card-text">Company: {{ job.company }}</p>
               <p class="card-text">Skill(s): {{ job.skills_required }}</p>
@@ -127,7 +128,11 @@
         {% else %}
           <p class="text-danger">No matching jobs found.</p>
         {% endif %}
-        <a href="/job-search" class="btn btn-secondary back-btn">Back</a>
+        
+        <div class="text-center">
+          <a href="/view-applications-submit" class="btn btn-primary back-btn">📄 View Applications</a>
+          <a href="/job-search" class="btn btn-secondary back-btn">🔙 Back</a>
+        </div>
       </div>
     </div>
     {% endif %}

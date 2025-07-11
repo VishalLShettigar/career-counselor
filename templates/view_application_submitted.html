@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>View Applications</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background: url('https://t3.ftcdn.net/jpg/03/07/12/68/360_F_307126887_reTqmRNNY3V4871sFIRqA9IYbBhMCdkt.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Segoe UI', sans-serif;
+      padding-top: 50px;
+    }
+
+    .container-main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .application-card {
+      margin-bottom: 25px;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      animation: fadeSlideIn 0.6s ease-in-out;
+      background: #ffffff;
+    }
+
+    .application-card .card-body {
+      padding: 20px;
+    }
+
+    .resume-btn {
+      transition: transform 0.2s ease;
+    }
+
+    .resume-btn:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    .success-card {
+      text-align: center;
+      padding: 30px;
+      border: 2px solid #28a745;
+      border-radius: 15px;
+      background-color: #e6ffed;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      display: none;
+    }
+
+    .success-card.active {
+      display: block;
+    }
+
+    .circle-animation {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+    }
+
+    .checkmark {
+      stroke: #28a745;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: drawCircle 1s ease forwards;
+    }
+
+    .check {
+      stroke: #28a745;
+      stroke-width: 4;
+      fill: none;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: drawCheck 0.5s ease 1s forwards;
+    }
+
+    @keyframes drawCircle {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container container-main">
+    <h3 class="text-center text-primary mb-4">Applications You Have Submitted</h3>
+
+    {% if applications %}
+      {% for app in applications %}
+        <div class="card application-card">
+          <div class="card-body">
+            <h5 class="card-title">{{ app.designation }} at {{ app.company }}</h5>
+            <p><strong>Name:</strong> {{ app.name }}</p>
+            <p><strong>Qualification:</strong> {{ app.qualification }}</p>
+            <p><strong>Experience:</strong> {{ app.experience }} years</p>
+            <p><strong>Skills:</strong> {{ app.skills }}</p>
+            <p><strong>University:</strong> {{ app.university }}</p>
+            <p><strong>Applied At:</strong> {{ app.applied_at }}</p>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <a href="{{ url_for('static', filename=app.resume_path) }}" target="_blank" class="btn btn-outline-primary resume-btn">
+                📄 View Resume
+              </a>
+
+              <button class="btn btn-warning" type="button" data-bs-toggle="collapse" data-bs-target="#editForm{{ app.id }}">
+                ✏️ Edit
+              </button>
+
+              <form method="POST" action="{{ url_for('delete_application_submit', app_id=app.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this application?');">
+                  🗑️ Delete
+                </button>
+              </form>
+            </div>
+
+            <!-- Collapsible Inline Edit Form -->
+            <div class="collapse mt-3" id="editForm{{ app.id }}">
+              <form method="POST" action="{{ url_for('edit_application_inline', app_id=app.id) }}">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Qualification</label>
+                    <input type="text" name="qualification" class="form-control" value="{{ app.qualification }}" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">University</label>
+                    <input type="text" name="university" class="form-control" value="{{ app.university }}" required>
+                  </div>
+                  <div class="col-md-6 mt-3">
+                    <label class="form-label">Experience (years)</label>
+                    <input type="text" name="experience" class="form-control" value="{{ app.experience }}" required>
+                  </div>
+                  <div class="col-md-6 mt-3">
+                    <label class="form-label">Skills</label>
+                    <input type="text" name="skills" class="form-control" value="{{ app.skills }}" required>
+                  </div>
+                </div>
+                <div class="text-end mt-3">
+                  <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-muted text-center">You have not submitted any job applications yet.</p>
+    {% endif %}
+
+    <div class="text-center mt-4">
+      <a href="/job-search" class="btn btn-success">🔍 Search for More Jobs</a>
+    </div>
+  </div>
+
+  <!-- Success Popup -->
+  <div class="overlay" id="overlay"></div>
+  <div class="success-card" id="successCard">
+    <div class="circle-animation">
+      <svg class="checkmark" viewBox="0 0 52 52">
+        <circle class="checkmark" cx="26" cy="26" r="25" />
+        <path class="check" d="M14 27l7 7 16-16" />
+      </svg>
+    </div>
+    <h4 class="text-success">Changes Saved Successfully!</h4>
+    <p>Your application details were updated.</p>
+    <button onclick="hideSuccessCard()" class="btn btn-dark mt-3">Okay</button>
+  </div>
+
+<!-- Delete Popup -->
+  <div class="overlay" id="overlay"></div>
+  <div class="success-card" id="deleteCard">
+    <div class="circle-animation">
+      <svg class="checkmark" viewBox="0 0 52 52">
+        <circle class="checkmark" cx="26" cy="26" r="25" />
+        <path class="check" d="M14 27l7 7 16-16" />
+      </svg>
+    </div>
+    <h4 class="text-success">Deleted Successfully!</h4>
+    <p>Your application details were deleted.</p>
+    <button onclick="hideDeleteCard()" class="btn btn-dark mt-3">Okay</button>
+  </div>
+
+  <script>
+    function showSuccessCard() {
+      document.getElementById('overlay').classList.add('active');
+      document.getElementById('successCard').classList.add('active');
+    }
+
+    function hideSuccessCard() {
+      document.getElementById('overlay').classList.remove('active');
+      document.getElementById('successCard').classList.remove('active');
+    }
+function showDeleteCard() {
+      document.getElementById('overlay').classList.add('active');
+      document.getElementById('deleteCard').classList.add('active');
+    }
+
+    function hideDeleteCard() {
+      document.getElementById('overlay').classList.remove('active');
+      document.getElementById('deleteCard').classList.remove('active');
+    }
+
+    {% if success_update %}
+    showSuccessCard();
+    {% endif %}
+
+    {% if success_delete %}
+    showDeleteCard();
+    {% endif %}
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

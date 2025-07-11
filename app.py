@@ -52,6 +52,8 @@ def register():
         email = request.form['email']
         password = request.form['password']
         hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        conn = get_db_connection()
+        cursor = conn.cursor()
         try:
             cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_pw))
             conn.commit()
@@ -68,6 +70,8 @@ def recruiter_register():
         email = request.form['email']
         password = request.form['password']
         hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        conn = get_db_connection()
+        cursor = conn.cursor()
         try:
             cursor.execute("INSERT INTO recruiter (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_pw))
             conn.commit()
@@ -82,10 +86,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
             session['username'] = username
+            session['user_email'] = user['email']
             flash("Login successful!", "success")
             return redirect('/index')
         else:
@@ -809,7 +816,7 @@ def apply():
     if request.method == 'POST':
         try:
             applicant_name = request.form.get('applicant_name', '').strip()
-            applicant_email = request.form.get('applicant_email', '').strip()
+            applicant_email = session.get('user_email')
             qualification = request.form.get('qualification', '').strip()
             university = request.form.get('university', '').strip()
             experience = request.form.get('experience', '').strip()
@@ -927,6 +934,64 @@ def delete_application(app_id):
     cursor.execute("DELETE FROM apply WHERE id = ? AND recruiter_id = ?", (app_id, recruiter_id))
     conn.commit()
     return redirect(url_for('view_applications', action_status='delete'))
+
+@app.route('/view-applications-submit')
+def view_applications_submit():
+    if 'user_email' not in session:
+        return redirect('/login')  # or your user login route
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM apply WHERE applicant_email = ?", (session['user_email'],))
+    applications = cursor.fetchall()
+    return render_template('view_application_submitted.html', applications=[dict(row) for row in applications])
+
+@app.route('/edit-application-inline/<int:app_id>', methods=['POST'])
+def edit_application_inline(app_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    qualification = request.form['qualification']
+    university = request.form['university']
+    experience = request.form['experience']
+    skills = request.form['skills']
+
+    # Update the application
+    cursor.execute("""
+        UPDATE apply
+        SET qualification = ?, university = ?, experience = ?, skills = ?
+        WHERE id = ?
+    """, (qualification, university, experience, skills, app_id))
+    conn.commit()
+
+    # Now fetch updated applications for the current user
+    user_email = session.get('user_email')
+    cursor.execute("SELECT * FROM apply WHERE applicant_email = ?", (user_email,))
+    applications = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("view_application_submitted.html", applications=applications, success_update=True)
+
+
+@app.route('/delete-application-submit/<int:app_id>', methods=['POST'])
+def delete_application_submit(app_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Delete the selected application
+    cursor.execute("DELETE FROM apply WHERE id = ?", (app_id,))
+    conn.commit()
+
+    # Fetch updated applications for the logged-in user
+    user_email = session.get('user_email')
+    cursor.execute("SELECT * FROM apply WHERE applicant_email = ?", (user_email,))
+    applications = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("view_application_submitted.html", applications=applications, success_delete=True)
+
 
 
 if __name__ == '__main__':

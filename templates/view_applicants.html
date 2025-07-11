@@ -184,7 +184,7 @@
                   <p><strong>Qualification:</strong> {{ app.qualification }} - {{ app.university }}</p>
                   <p><strong>Experience:</strong> {{ app.experience }} year(s)</p>
                   <p><strong>Skills:</strong> {{ app.skills }}</p>
-                  <p><strong>Applied on:</strong> {{ app.applied_at.strftime('%d %b %Y %H:%M') }}</p>
+                  <p><strong>Applied on:</strong> {{ app.applied_at[:20] }}</p>
                  <a href="{{ url_for('static', filename=app.resume_path.replace('static/', '')) }}" 
    class="btn btn-outline-primary btn-sm btn-resume" target="_blank">
    📄 View Resume
