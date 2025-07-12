@@ -62,7 +62,8 @@ def create_tables():
             resume_path TEXT,
             recruiter_id INTEGER,
             job_id INTEGER,
-            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'pending'
         )
     ''')
 

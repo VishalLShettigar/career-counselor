@@ -162,6 +162,25 @@
     @keyframes drawCheck {
       to { stroke-dashoffset: 0; }
     }
+    .status-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+}
+
+.status-pending { background-color: #f0ad4e; }
+.status-rejected { background-color: #d9534f; }
+.status-shortlisted { background-color: #5cb85c; }
+
+.disabled-card {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(0.9);
+}
   </style>
 </head>
 <body>
@@ -170,31 +189,61 @@
   <div id="main-content" class="container user-container">
     <h3 class="text-center text-primary mb-4">📋 Applications for Your Jobs</h3>
 
+    <div class="text-end mb-3">
+      <a href="{{ url_for('view_applications', filter='false' if apply_filter else 'true') }}" class="btn btn-outline-primary">
+        {{ '🔄 Show All Applications' if apply_filter else '✅ Filter Eligible Applications' }}
+      </a>
+    </div>
+
     {% if grouped_applications %}
       {% for company, roles in grouped_applications.items() %}
         <div class="user-card">
           <div class="job-role-heading">{{ company }}</div>
           {% for designation, apps in roles.items() %}
-            <h5 class="text-info mb-3">{{ designation }}</h5>
+            <h5 class="text-info mb-3">
+              {{ designation }}
+              <small class="text-muted">
+                Total: {{ grouped_counts[company][designation]['total'] }},
+                Eligible: {{ grouped_counts[company][designation]['eligible'] }}
+              </small>
+            </h5>
             <div class="applicant-row mb-4">
               {% for app in apps %}
-                <div class="applicant-card">
-                  <h5>{{ app.applicant_name }} <small class="text-muted">({{ app.designation }} at {{ app.company }})</small></h5>
-                  <p class="truncate"><strong>Email:</strong> {{ app.applicant_email }}</p>
-                  <p><strong>Qualification:</strong> {{ app.qualification }} - {{ app.university }}</p>
-                  <p><strong>Experience:</strong> {{ app.experience }} year(s)</p>
-                  <p><strong>Skills:</strong> {{ app.skills }}</p>
-                  <p><strong>Applied on:</strong> {{ app.applied_at[:20] }}</p>
-                 <a href="{{ url_for('static', filename=app.resume_path.replace('static/', '')) }}" 
-   class="btn btn-outline-primary btn-sm btn-resume" target="_blank">
-   📄 View Resume
-</a>
-                  <form method="POST" action="/delete-application/{{ app.id }}" class="d-inline">
-                    <button type="submit" class="btn btn-danger btn-sm mt-2">
-                      🗑️ Delete
-                    </button>
-                  </form>
-                </div>
+                <div class="applicant-card {% if app.status == 'rejected' %}disabled-card{% endif %}">
+  <h5>{{ app.applicant_name }} <small class="text-muted">({{ app.designation }} at {{ app.company }})</small></h5>
+
+  <p><strong>Status:</strong>
+    {% if app.status == 'rejected' %}
+      <span class="status-pill status-rejected">❌ Rejected</span>
+    {% elif app.status == 'shortlisted' %}
+      <span class="status-pill status-shortlisted">✅ Shortlisted</span>
+    {% else %}
+      <span class="status-pill status-pending">⏳ Pending</span>
+    {% endif %}
+  </p>
+
+  <p class="truncate"><strong>Email:</strong> {{ app.applicant_email }}</p>
+  <p><strong>Qualification:</strong> {{ app.qualification }} - {{ app.university }}</p>
+  <p><strong>Experience:</strong> {{ app.experience }} year(s)</p>
+  <p><strong>Skills:</strong> {{ app.skills }}</p>
+  <p><strong>Applied on:</strong> {{ app.applied_at[:20] }}</p>
+
+  <a href="{{ url_for('static', filename=app.resume_path.replace('static/', '')) }}" 
+     class="btn btn-outline-primary btn-sm btn-resume" target="_blank">
+    📄 View Resume
+  </a>
+
+  {% if app.status == 'pending' %}
+  <form method="POST" action="/reject-application/{{ app.id }}" class="d-inline">
+    <button type="submit" class="btn btn-warning btn-sm mt-2">❌ Reject</button>
+  </form>
+
+  <form method="POST" action="/shortlist-application/{{ app.id }}" class="d-inline ms-2">
+    <button type="submit" class="btn btn-success btn-sm mt-2">✅ Shortlist</button>
+  </form>
+  {% endif %}
+</div>
+
               {% endfor %}
             </div>
           {% endfor %}
@@ -206,24 +255,24 @@
           <ul class="pagination justify-content-center">
             {% if page > 1 %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+              <a class="page-link" href="?page={{ page - 1 }}{% if apply_filter %}&filter=true{% endif %}">Previous</a>
             </li>
             {% endif %}
             {% for p in range(1, total_pages + 1) %}
             <li class="page-item {% if p == page %}active{% endif %}">
-              <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+              <a class="page-link" href="?page={{ p }}{% if apply_filter %}&filter=true{% endif %}">{{ p }}</a>
             </li>
             {% endfor %}
             {% if page < total_pages %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+              <a class="page-link" href="?page={{ page + 1 }}{% if apply_filter %}&filter=true{% endif %}">Next</a>
             </li>
             {% endif %}
           </ul>
         </nav>
         <div class="col-md-2">
-        <a href="/job-postings" class="btn btn-secondary w-100">Back</a>
-      </div>
+          <a href="/job-postings" class="btn btn-secondary w-100">Back</a>
+        </div>
       </div>
 
     {% else %}

@@ -810,6 +810,10 @@ def system_settings():
         owner_name=owner_name,
         footer=footer
     )
+from flask import request, render_template, session
+from werkzeug.utils import secure_filename
+from datetime import datetime
+import os
 
 @app.route('/apply', methods=['GET', 'POST'])
 def apply():
@@ -838,21 +842,25 @@ def apply():
                 }
                 return render_template('apply.html', job=job, resume_error=resume_error, application_status=None)
 
+            # Save resume file
             filename = secure_filename(resume.filename)
             resume_path = f"resumes/{filename}"
             resume.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
+            # Insert application data
             conn = get_db_connection()
             cursor = conn.cursor()
             query = """
                 INSERT INTO apply (
                     applicant_name, applicant_email, qualification, university,
-                    experience, skills, resume_path, recruiter_id, job_id, applied_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    experience, skills, resume_path, recruiter_id, job_id,
+                    applied_at, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             values = (
                 applicant_name, applicant_email, qualification, university,
-                experience, skills, resume_path, recruiter_id, job_id, datetime.now()
+                experience, skills, resume_path, recruiter_id, job_id,
+                datetime.now(), 'pending'
             )
             cursor.execute(query, values)
             conn.commit()
@@ -865,11 +873,13 @@ def apply():
                 'job_id': job_id,
                 'recruiter_id': recruiter_id
             }
-            return render_template('apply.html', job=job, application_status='success')
+
+            return render_template('apply.html', job=job, application_status='success', resume_error=None)
 
         except Exception as e:
             return f"Unexpected Error: {str(e)}", 500
 
+    # For GET requests (loading the form)
     job = {
         'designation': request.args.get('designation'),
         'company': request.args.get('company'),
@@ -880,6 +890,11 @@ def apply():
     }
     return render_template('apply.html', job=job, application_status=None, resume_error=None)
 
+
+from flask import request, render_template, session, redirect
+from collections import defaultdict
+import math
+
 @app.route('/view-applications')
 def view_applications():
     recruiter_id = session.get('recruiter_id')
@@ -887,41 +902,84 @@ def view_applications():
         return redirect('/login')
 
     action_status = request.args.get('action_status')
+    apply_filter = request.args.get('filter') == 'true'
     page = request.args.get('page', 1, type=int)
     per_page = 3
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    query = """
-        SELECT a.*, j.designation, j.company
+    # Get all applications posted for this recruiter
+    cursor.execute("""
+        SELECT a.*, j.designation, j.company, j.skills_required
         FROM apply a
         JOIN job j ON a.job_id = j.id
         WHERE a.recruiter_id = ?
         ORDER BY j.company ASC, j.designation ASC, a.applied_at DESC
-    """
-    cursor.execute(query, (recruiter_id,))
+    """, (recruiter_id,))
     rows = cursor.fetchall()
     applications = [dict(row) for row in rows]
 
+    # Grouping + filtering
     company_groups = defaultdict(lambda: defaultdict(list))
-    for app in applications:
-        company = app['company']
-        designation = app['designation']
-        company_groups[company][designation].append(app)
+    company_counts = defaultdict(lambda: defaultdict(lambda: {'total': 0, 'eligible': 0}))
 
+    for app in applications:
+        comp = app['company']
+        desg = app['designation']
+
+        # ✅ Eligibility only based on skills
+        required_skills = app['skills_required'].lower().split(',') if app['skills_required'] else []
+        user_skills = app['skills'].lower().split(',') if app['skills'] else []
+        matched_skills = set(s.strip() for s in required_skills).intersection(set(s.strip() for s in user_skills))
+        eligible = len(matched_skills) >= 2
+
+        company_counts[comp][desg]['total'] += 1
+        if eligible:
+            company_counts[comp][desg]['eligible'] += 1
+
+        if not apply_filter or eligible:
+            company_groups[comp][desg].append(app)
+
+    # Pagination
     all_companies = list(company_groups.keys())
     total_pages = math.ceil(len(all_companies) / per_page)
     start = (page - 1) * per_page
     end = start + per_page
     selected_companies = all_companies[start:end]
-    grouped_applications = {company: company_groups[company] for company in selected_companies}
 
-    return render_template('view_applicants.html',
+    grouped_applications = {company: company_groups[company] for company in selected_companies}
+    grouped_counts = {company: company_counts[company] for company in selected_companies}
+
+    return render_template("view_applicants.html",
                            grouped_applications=grouped_applications,
+                           grouped_counts=grouped_counts,
                            page=page,
                            total_pages=total_pages,
+                           apply_filter=apply_filter,
                            action_status=action_status)
+
+
+
+@app.route('/shortlist-application/<int:app_id>', methods=['POST'])
+def shortlist_application(app_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE apply SET status = 'shortlisted' WHERE id = ?", (app_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('view_applications', action_status='shortlisted'))
+
+@app.route('/reject-application/<int:app_id>', methods=['POST'])
+def reject_application(app_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE apply SET status = 'rejected' WHERE id = ?", (app_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('view_applications', action_status='rejected'))
+
+
 
 @app.route('/delete-application/<int:app_id>', methods=['POST'])
 def delete_application(app_id):
@@ -942,9 +1000,18 @@ def view_applications_submit():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM apply WHERE applicant_email = ?", (session['user_email'],))
+    cursor.execute("""
+        SELECT a.*, j.designation, j.company
+        FROM apply a
+        JOIN job j ON a.job_id = j.id
+        WHERE a.applicant_email = ?
+        ORDER BY a.applied_at DESC
+    """, (session['user_email'],))
     applications = cursor.fetchall()
-    return render_template('view_application_submitted.html', applications=[dict(row) for row in applications])
+
+    return render_template('view_application_submitted.html',
+                           applications=[dict(row) for row in applications])
+
 
 @app.route('/edit-application-inline/<int:app_id>', methods=['POST'])
 def edit_application_inline(app_id):
@@ -991,6 +1058,7 @@ def delete_application_submit(app_id):
     conn.close()
 
     return render_template("view_application_submitted.html", applications=applications, success_delete=True)
+
 
 
 
