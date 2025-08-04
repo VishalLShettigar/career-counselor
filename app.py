@@ -36,6 +36,13 @@ def root():
 def home():
     return render_template('home.html')
 
+from flask import send_file, session, abort
+
+@app.route("/download-db")
+def download_db():
+    return send_file("career_counselor.db", as_attachment=True)
+
+
 @app.route('/index')
 def index():
     if 'username' in session:
