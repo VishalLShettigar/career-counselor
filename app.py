@@ -10,6 +10,7 @@ import math
 import bcrypt
 import sqlite3
 from datetime import datetime
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 
 
 
@@ -313,7 +314,6 @@ def redirect_to_free_ai():
 @app.route('/about-project')
 def about_project():
     return render_template('about.html')
-
 
 @app.route('/portfolio')
 def portfolio():
@@ -1058,8 +1058,6 @@ def delete_application_submit(app_id):
     conn.close()
 
     return render_template("view_application_submitted.html", applications=applications, success_delete=True)
-
-
 
 
 if __name__ == '__main__':
