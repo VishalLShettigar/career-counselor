@@ -10,8 +10,6 @@ import math
 import bcrypt
 import sqlite3
 from datetime import datetime
-from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-
 
 
 app = Flask(__name__)
