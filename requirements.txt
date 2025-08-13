@@ -14,9 +14,9 @@ python-dotenv
 reportlab
 bcrypt
 flask-bcrypt
-
-
-
+pytesseract
+io
+PIL
 
 
 

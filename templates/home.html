@@ -8,11 +8,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
     :root {
-      --bg1: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d');
-      --bg2: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f');
-      --bg3: url('https://images.unsplash.com/photo-1535223289827-42f1e9919769');
-      --bg4: url('https://images.unsplash.com/photo-1558655146-d09347e92766');
-      --bg5: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d');
+      --bg1:url('../static/uploads/backgroundcareersaathi.png');
+      --bg2: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d');
+      --bg3: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f');
+      --bg4: url('https://images.unsplash.com/photo-1535223289827-42f1e9919769');
+      --bg5: url('https://images.unsplash.com/photo-1558655146-d09347e92766');
+      --bg6: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d');
     }
 
     html, body {
@@ -25,9 +26,47 @@
       background-repeat: no-repeat;
       transition: background 1s ease-in-out;
     }
+/* Logo container for positioning */
+.logo-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+/* Logo image styling */
+.logo-top-left {
+  max-height: 150px; /* controls the size */
+  width: 150px;
+  opacity: 0;
+  transform: scale(0.8) translateY(-10px);
+  animation: logoLoad 1s ease-out forwards, logoFloat 4s ease-in-out infinite;
+}
+
+/* Initial fade-in + scale animation */
+@keyframes logoLoad {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Gentle floating effect */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.02);
+  }
+}
 
     .overlay {
-      background-color: rgba(0, 0, 0, 0.7);
+      background-color: rgba(0, 0, 0, 0.9);
       height: 100%;
       width: 100%;
       display: flex;
@@ -165,6 +204,10 @@
 </head>
 <body>
 
+<div class="logo-container">
+  <img src="/static/uploads/logocareersaathi.png" alt="CareerSaathi Logo" class="logo-top-left">
+</div>
+
 <div class="overlay" id="mainOverlay">
   <div class="floating-btns">
     <button class="btn btn-theme btn-sm" onclick="toggleDarkMode()">🌓 Dark Mode</button>
@@ -179,7 +222,7 @@
   <button class="btn btn-start" onclick="showCard()">🚀 Get Started</button>
 
   <div class="btn-group-links">
-    <a href="/about_project" class="btn btn-outline-info">📘 About This Project</a>
+    <a href="/about-project" class="btn btn-outline-info">📘 About This Project</a>
     <a href="/feedback" class="btn btn-outline-light">💬 Feedback</a>
   </div>
 

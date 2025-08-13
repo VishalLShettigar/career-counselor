@@ -13,6 +13,44 @@
       height: 100vh;
       margin: 0;
     }
+/* Logo container for positioning */
+.logo-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+/* Logo image styling */
+.logo-top-left {
+  max-height: 150px; /* controls the size */
+  width: 150px;
+  opacity: 0;
+  transform: scale(0.8) translateY(-10px);
+  animation: logoLoad 1s ease-out forwards, logoFloat 4s ease-in-out infinite;
+}
+
+/* Initial fade-in + scale animation */
+@keyframes logoLoad {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Gentle floating effect */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.02);
+  }
+}
 
     .overlay {
       background-color: rgba(0, 0, 0, 0.7);
@@ -62,10 +100,13 @@
   </style>
 </head>
 <body>
+  <div class="logo-container">
+  <img src="/static/uploads/logocareersaathi.png" alt="CareerSaathi Logo" class="logo-top-left">
+</div>
   <div class="overlay">
     <div class="login-card">
       <div class="text-center mb-4">
-        <h2 class="form-title">👤 Owner Login</h2>
+        <h2 class="form-title">👤CareerSaathi <br> Owner Login</h2>
       </div>
       {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -74,7 +115,7 @@
       {% endwith %}
       <form method="POST" action="/owner">
         <div class="mb-3">
-          <label class="form-label">Username</label>
+          <label class="form-label">Ownername</label>
           <input type="text" class="form-control" name="username" required />
         </div>
         <div class="mb-3">
