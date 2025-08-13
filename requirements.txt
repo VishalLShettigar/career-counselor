@@ -15,7 +15,6 @@ reportlab
 bcrypt
 flask-bcrypt
 pytesseract
-PIL
 
 
 
