@@ -4,7 +4,10 @@ def create_tables():
     conn = sqlite3.connect('career_counselor.db')
     cursor = conn.cursor()
 
-    # 1. users table
+    # --- Drop old apply table (ONLY if exists, for dev) ---
+    cursor.execute("DROP TABLE IF EXISTS messages")
+
+    # users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,7 +17,7 @@ def create_tables():
         )
     ''')
 
-    # 2. recruiter table
+    # recruiter table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS recruiter (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +27,7 @@ def create_tables():
         )
     ''')
 
-    # 3. owner table
+    # owner table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS owner (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +36,7 @@ def create_tables():
         )
     ''')
 
-    # 4. job table
+    # job table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS job (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,14 +48,15 @@ def create_tables():
             skills_required TEXT,
             contact_number TEXT,
             email TEXT,
-            posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            posted_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
-    # 5. apply table
+    # apply table (with user_id)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS apply (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER, 
             applicant_name TEXT,
             applicant_email TEXT,
             qualification TEXT,
@@ -62,12 +66,13 @@ def create_tables():
             resume_path TEXT,
             recruiter_id INTEGER,
             job_id INTEGER,
-            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'pending'
+            applied_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'pending',
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
 
-    # 6. feedback table
+    # feedback table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS feedback (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,9 +85,22 @@ def create_tables():
         )
     ''')
 
+    # messages table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER NOT NULL,
+            sender_type TEXT NOT NULL CHECK(sender_type IN ('user','recruiter')),
+            receiver_id INTEGER NOT NULL,
+            receiver_type TEXT NOT NULL CHECK(receiver_type IN ('user','recruiter')),
+            message TEXT NOT NULL,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
     conn.close()
-    print("All tables created successfully.")
+    print("✅ All tables created successfully with user_id in apply table.")
 
 if __name__ == '__main__':
     create_tables()

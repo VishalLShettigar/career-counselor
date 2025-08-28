@@ -233,7 +233,8 @@
     📄 View Resume
   </a>
 
-  {% if app.status == 'pending' %}
+{% if app.status == 'pending' %}
+  <!-- Reject and Shortlist options -->
   <form method="POST" action="/reject-application/{{ app.id }}" class="d-inline">
     <button type="submit" class="btn btn-warning btn-sm mt-2">❌ Reject</button>
   </form>
@@ -241,7 +242,13 @@
   <form method="POST" action="/shortlist-application/{{ app.id }}" class="d-inline ms-2">
     <button type="submit" class="btn btn-success btn-sm mt-2">✅ Shortlist</button>
   </form>
-  {% endif %}
+
+{% elif app.status == 'shortlisted' and app.user_id %}
+  <!-- Chat button visible only after shortlist -->
+  <a href="{{ url_for('recruiter_chat', application_id=app.id) }}" class="btn btn-primary btn-sm mt-2">
+    💬 Chat
+  </a>
+{% endif %} 
 </div>
 
               {% endfor %}
